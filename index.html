@@ -29,6 +29,9 @@
   --ink2:#F5F7EC;
   --ink3:#EDF0E0;
   --bg:#FAF8F3;
+  --sand:#D4C5B2;
+  --sand-lt:rgba(212,197,178,.12);
+  --sand-md:rgba(212,197,178,.22);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1147,6 +1150,143 @@ footer{
   transition:opacity .3s;
 }
 .el-credit:hover{opacity:.7}
+
+/* ═══════════════════════════════════════════════════════
+   SAND #D4C5B2 — acentos cálidos sutiles
+   ═══════════════════════════════════════════════════════ */
+
+/* Separadores dobles sand entre secciones */
+.sand-divider{
+  position:relative;width:100%;height:1px;margin:0;
+  background:linear-gradient(90deg,transparent 5%,var(--sand-md) 30%,var(--sand) 50%,var(--sand-md) 70%,transparent 95%);
+  opacity:.45;
+}
+.sand-divider::after{
+  content:'';position:absolute;top:4px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 15%,var(--sand-lt) 40%,var(--sand-md) 50%,var(--sand-lt) 60%,transparent 85%);
+}
+
+/* Orbes flotantes sand — partículas de fondo */
+.sand-orbs{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;
+}
+.sand-orb{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,197,178,.18) 0%,rgba(212,197,178,.04) 60%,transparent 100%);
+  animation:sandFloat var(--dur,18s) ease-in-out infinite alternate;
+  will-change:transform;
+}
+@keyframes sandFloat{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(var(--dx1,12px),var(--dy1,-18px)) scale(1.06)}
+  66%{transform:translate(var(--dx2,-8px),var(--dy2,14px)) scale(.94)}
+  100%{transform:translate(var(--dx3,5px),var(--dy3,-10px)) scale(1.02)}
+}
+
+/* Sand glow sutil en countdown */
+#countdown{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.06) 25%,rgba(200,212,160,.08) 50%,rgba(212,197,178,.06) 75%,var(--bg) 100%);
+}
+
+/* Hero overlay con toque sand cálido */
+.h-ov{
+  background:
+    linear-gradient(180deg,
+      rgba(44,51,25,.55) 0%,
+      rgba(44,51,25,.28) 35%,
+      rgba(212,197,178,.08) 55%,
+      rgba(44,51,25,.50) 100%) !important;
+}
+
+/* Itinerary cards con borde sand sutil */
+.itin-card{
+  border-color:rgba(212,197,178,.22) !important;
+  box-shadow:0 1px 0 0 rgba(212,197,178,.10);
+}
+.itin-event.is-active .itin-card{
+  border-color:rgba(212,197,178,.38) !important;
+  box-shadow:0 18px 52px -22px rgba(212,197,178,.18),0 1px 0 0 rgba(212,197,178,.15) !important;
+}
+
+/* Location cards sand accent */
+.loc-card{
+  border-color:rgba(212,197,178,.18) !important;
+  background:linear-gradient(135deg,rgba(96,115,14,.02) 0%,rgba(212,197,178,.05) 100%) !important;
+}
+
+/* Family cards sand border */
+.fam-card{
+  border-color:rgba(212,197,178,.18) !important;
+  background:linear-gradient(180deg,rgba(96,115,14,.02),rgba(212,197,178,.04)) !important;
+}
+
+/* RSVP sand gradient de fondo */
+#rsvp{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.06) 40%,rgba(212,197,178,.08) 60%,var(--bg) 100%);
+}
+.rsvp-input{
+  border-color:rgba(212,197,178,.28) !important;
+  background:linear-gradient(135deg,rgba(96,115,14,.04),rgba(212,197,178,.06)) !important;
+}
+.rsvp-input:focus{border-color:rgba(212,197,178,.55) !important}
+.rsvp-adults{
+  border-color:rgba(212,197,178,.15) !important;
+  background:linear-gradient(180deg,rgba(96,115,14,.02),rgba(212,197,178,.04)) !important;
+}
+
+/* Footer sand gradient */
+footer{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.07) 50%,rgba(212,197,178,.10) 100%) !important;
+}
+
+/* Gallery sand frame en cards */
+.wheel-card{
+  border-color:rgba(212,197,178,.35) !important;
+  box-shadow:0 12px 40px rgba(212,197,178,.18),0 2px 8px rgba(44,51,25,.12) !important;
+}
+
+/* Dress code sand accent en swatches */
+.dc-swatch-dot::after{
+  border-color:rgba(212,197,178,.40) !important;
+}
+
+/* Shimmer dividers con toque sand */
+.sdiv{
+  background:linear-gradient(90deg,transparent,rgba(212,197,178,.45),var(--peach),rgba(212,197,178,.45),transparent) !important;
+}
+
+/* Galería — touch-action para evitar scroll horizontal al arrastrar */
+#gallery{touch-action:pan-y}
+.wheel-scene{touch-action:none}
+
+/* Gift section sand */
+#gifts{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.05) 50%,var(--bg) 100%);
+}
+
+/* Calendar section sand glow */
+#calendar{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.06) 50%,var(--bg) 100%);
+}
+
+/* Buttons sand hover glow */
+.btn-olive{
+  box-shadow:0 4px 22px rgba(96,115,14,.25),0 0 0 0 rgba(212,197,178,0) !important;
+  transition:all .35s !important;
+}
+.btn-olive:hover{
+  box-shadow:0 6px 28px rgba(96,115,14,.35),0 0 12px rgba(212,197,178,.25) !important;
+}
+
+/* Corner accents con sand */
+.corner::before,.corner::after{
+  background:linear-gradient(180deg,var(--peach),var(--sand)) !important;
+}
+
+/* Sand mesh overlay sutil en dresscode */
+#dresscode{
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(212,197,178,.04) 30%,rgba(212,197,178,.06) 70%,var(--bg) 100%);
+}
   </style>
 </head>
 <body>
@@ -1260,9 +1400,14 @@ footer{
   </div>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 2. CUENTA REGRESIVA ══════════════ -->
 <section id="countdown">
+  <div class="sand-orbs" aria-hidden="true">
+    <div class="sand-orb" style="width:160px;height:160px;top:10%;left:-30px;--dur:22s;--dx1:20px;--dy1:-15px;--dx2:-12px;--dy2:18px;--dx3:8px;--dy3:-8px"></div>
+    <div class="sand-orb" style="width:120px;height:120px;bottom:15%;right:-20px;--dur:26s;--dx1:-15px;--dy1:12px;--dx2:18px;--dy2:-10px;--dx3:-5px;--dy3:15px"></div>
+  </div>
   <div class="cd-wave-top" aria-hidden="true">
     <svg viewBox="0 0 800 50" preserveAspectRatio="none">
       <path d="M0,25 Q100,5 200,25 T400,25 T600,25 T800,25" fill="none" stroke="rgba(96,115,14,.22)" stroke-width="1"/>
@@ -1336,6 +1481,7 @@ footer{
   </div>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 3. UBICACIONES ═══════════════════ -->
 <section id="location">
@@ -1444,9 +1590,14 @@ footer{
   </a>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 5. ITINERARIO ════════════════════ -->
 <section id="itinerary">
+  <div class="sand-orbs" aria-hidden="true">
+    <div class="sand-orb" style="width:140px;height:140px;top:5%;right:-40px;--dur:20s;--dx1:-18px;--dy1:10px;--dx2:14px;--dy2:-16px;--dx3:-6px;--dy3:12px"></div>
+    <div class="sand-orb" style="width:100px;height:100px;bottom:20%;left:-25px;--dur:28s;--dx1:16px;--dy1:-12px;--dx2:-10px;--dy2:20px;--dx3:8px;--dy3:-6px"></div>
+  </div>
   <span class="lbl">El día de la boda</span>
   <h2 class="ttl">Itinerario</h2>
   <div class="gline"></div>
@@ -1527,6 +1678,7 @@ footer{
   </div>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 6. DRESS CODE ════════════════════ -->
 <section id="dresscode">
@@ -1583,9 +1735,14 @@ footer{
   <div class="fam-card"><p class="fam-nms">José Antonio Hernández Ayuso<br><span class="fam-sep">&amp;</span><br>Amparo Elizabeth Cruz Martínez</p></div>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 8. GALERÍA — RUEDA 3D ══════════════ -->
 <section id="gallery" aria-label="Galería de fotos">
+  <div class="sand-orbs" aria-hidden="true">
+    <div class="sand-orb" style="width:180px;height:180px;top:8%;left:-50px;--dur:24s;--dx1:22px;--dy1:-14px;--dx2:-16px;--dy2:18px;--dx3:10px;--dy3:-10px"></div>
+    <div class="sand-orb" style="width:110px;height:110px;bottom:10%;right:-30px;--dur:20s;--dx1:-12px;--dy1:15px;--dx2:16px;--dy2:-12px;--dx3:-8px;--dy3:10px"></div>
+  </div>
   <span class="lbl">Nuestra historia</span>
   <h2 class="ttl">Momentos <span style="font-family:'Great Vibes',cursive;color:var(--peach);font-size:42px;">juntos</span></h2>
   <div class="gal-header-ornament"></div>
@@ -1602,6 +1759,7 @@ footer{
   <p class="gal-hint">Arrastra para girar</p>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 9. MESA DE REGALOS ═══════════════ -->
 <section id="gifts">
@@ -1737,6 +1895,7 @@ footer{
   </div>
 </section>
 
+<div class="sand-divider" aria-hidden="true"></div>
 
 <!-- ═══════════════ 10. RSVP ═════════════════════════ -->
 <section id="rsvp">
@@ -2324,7 +2483,7 @@ function initWheel() {
   window.addEventListener('mouseup', pointerUp);
 
   ring.addEventListener('touchstart', function (e) { pointerDown(e.touches[0].clientX); }, { passive: true });
-  ring.addEventListener('touchmove', function (e) { pointerMove(e.touches[0].clientX); }, { passive: true });
+  ring.addEventListener('touchmove', function (e) { if (isDrag) { e.preventDefault(); } pointerMove(e.touches[0].clientX); }, { passive: false });
   ring.addEventListener('touchend', pointerUp);
 
   var auto = true;
