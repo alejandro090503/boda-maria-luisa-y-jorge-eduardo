@@ -868,6 +868,20 @@ section{padding:64px 24px;position:relative;overflow:hidden}
   border-radius:16px;padding:26px 20px 22px;
   margin-bottom:8px;
   box-shadow:0 2px 12px rgba(74,94,0,.04);
+  position:relative;overflow:hidden;
+}
+.fam-card::after{
+  content:'';position:absolute;top:0;left:-75%;
+  width:50%;height:100%;
+  background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);
+  opacity:0;pointer-events:none;
+}
+.fam-card.is-shining::after{
+  animation:famShine .9s ease-out forwards;
+}
+@keyframes famShine{
+  0%{opacity:1;left:-75%}
+  100%{opacity:0;left:125%}
 }
 .fam-nms{
   font-family:'Cormorant Garamond',serif;
@@ -2135,8 +2149,14 @@ function scrollAnims() {
 
   gsap.from('.fam-ttl', { opacity: 0, y: 18, duration: .6, stagger: .2, ease,
     scrollTrigger: { trigger: '#family', start: 'top 78%', once: true } });
-  gsap.from('.fam-card', { opacity: 0, y: 20, duration: .55, stagger: .08, ease,
-    scrollTrigger: { trigger: '#family', start: 'top 78%', once: true } });
+  gsap.from('.fam-card', { opacity: 0, y: 30, scale: .97, duration: .7, stagger: .18, ease: 'back.out(1.2)',
+    scrollTrigger: { trigger: '#family', start: 'top 78%', once: true },
+    onComplete: function(){
+      document.querySelectorAll('.fam-card').forEach(function(c, i){
+        setTimeout(function(){ c.classList.add('is-shining'); }, i * 220 + 300);
+      });
+    }
+  });
 
   gsap.from('.gbx', { opacity: 0, y: 22, duration: .6, stagger: .11, ease,
     scrollTrigger: { trigger: '#gifts', start: 'top 80%', once: true } });
