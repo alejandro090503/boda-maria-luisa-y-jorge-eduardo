@@ -858,24 +858,35 @@ section{padding:64px 24px;position:relative;overflow:hidden}
 #family{text-align:center}
 .fam-ttl{
   font-family:'Cormorant Garamond',serif;
-  font-size:17px;font-weight:700;letter-spacing:4px;
+  font-size:13px;font-weight:600;letter-spacing:5px;
   text-transform:uppercase;color:var(--peach);
-  margin-bottom:14px;opacity:1;
+  margin-bottom:10px;opacity:.7;
 }
 .fam-card{
-  background:rgba(96,115,14,.03);
-  border:1px solid rgba(96,115,14,.12);
-  border-radius:14px;padding:20px 16px;
+  background:linear-gradient(170deg,rgba(96,115,14,.04),rgba(212,197,178,.06));
+  border:1px solid rgba(96,115,14,.15);
+  border-radius:16px;padding:26px 20px 22px;
   margin-bottom:8px;
+  box-shadow:0 2px 12px rgba(74,94,0,.04);
 }
 .fam-nms{
   font-family:'Cormorant Garamond',serif;
-  font-size:21px;font-weight:500;line-height:1.7;
+  font-size:22px;font-weight:600;line-height:1.5;
   color:var(--cream);
+}
+.fam-name-first{
+  font-size:24px;font-weight:600;letter-spacing:.5px;
+  display:block;
+}
+.fam-name-last{
+  font-size:15px;font-weight:500;letter-spacing:3px;
+  text-transform:uppercase;opacity:.55;
+  display:block;margin-top:2px;
 }
 .fam-sep{
   font-family:'Great Vibes',cursive;
-  font-size:24px;color:var(--peach);opacity:.8;
+  font-size:30px;color:var(--peach);opacity:.7;
+  display:block;line-height:1;margin:6px 0;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1217,7 +1228,6 @@ footer{
 /* Family cards sand border */
 .fam-card{
   border-color:rgba(212,197,178,.18) !important;
-  background:linear-gradient(180deg,rgba(96,115,14,.02),rgba(212,197,178,.04)) !important;
 }
 
 /* RSVP sand gradient de fondo */
@@ -1692,17 +1702,17 @@ footer{
   <div class="gline"></div>
 
   <p class="fam-ttl">Padres de la Novia</p>
-  <div class="fam-card"><p class="fam-nms">Luis Adolfo Balcázar Zebadúa<br><span class="fam-sep">&amp;</span><br>María del Rosario Tovilla González</p></div>
+  <div class="fam-card"><p class="fam-nms"><span class="fam-name-first">Luis Adolfo</span><span class="fam-name-last">Balcázar Zebadúa</span><span class="fam-sep">&amp;</span><span class="fam-name-first">María del Rosario</span><span class="fam-name-last">Tovilla González</span></p></div>
 
   <div class="sdiv"></div>
 
   <p class="fam-ttl">Padres del Novio</p>
-  <div class="fam-card"><p class="fam-nms">Jorge Luis Ochoa Guillén<br><span class="fam-sep">&amp;</span><br>Martha Cristina Cruz Martínez</p></div>
+  <div class="fam-card"><p class="fam-nms"><span class="fam-name-first">Jorge Luis</span><span class="fam-name-last">Ochoa Guillén</span><span class="fam-sep">&amp;</span><span class="fam-name-first">Martha Cristina</span><span class="fam-name-last">Cruz Martínez</span></p></div>
 
   <div class="sdiv"></div>
 
   <p class="fam-ttl">Padrinos</p>
-  <div class="fam-card"><p class="fam-nms">José Antonio Hernández Ayuso<br><span class="fam-sep">&amp;</span><br>Amparo Elizabeth Cruz Martínez</p></div>
+  <div class="fam-card"><p class="fam-nms"><span class="fam-name-first">José Antonio</span><span class="fam-name-last">Hernández Ayuso</span><span class="fam-sep">&amp;</span><span class="fam-name-first">Amparo Elizabeth</span><span class="fam-name-last">Cruz Martínez</span></p></div>
 </section>
 
 <div class="sand-divider" aria-hidden="true"></div>
