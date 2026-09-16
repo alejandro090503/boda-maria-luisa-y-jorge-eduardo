@@ -1114,9 +1114,18 @@ section{padding:64px 24px;position:relative;overflow:hidden}
   transition:border-color .3s;
   -webkit-appearance:none;box-sizing:border-box;
 }
-.rsvp-input::placeholder{color:var(--cream);opacity:.32}
+.rsvp-input::placeholder{color:var(--cream);opacity:.5}
 .rsvp-input:focus{border-color:rgba(96,115,14,.55)}
 .rsvp-submit-btn{max-width:100%;margin:18px auto 0;display:flex;justify-content:center;gap:8px}
+.rsvp-greet{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;font-weight:600;color:var(--peach);line-height:1.2;margin-bottom:16px}
+.rsvp-greet::before{content:'Invitación para';display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-style:normal;font-weight:700;color:var(--cream);opacity:.5;margin-bottom:5px}
+.rsvp-fields{display:flex;flex-direction:column;gap:10px}
+.rsvp-toggle{display:flex;gap:10px;margin:0 auto 14px}
+.rsvp-toggle-btn{flex:1;padding:13px 8px;border:1.5px solid rgba(74,94,0,.3);background:rgba(74,94,0,.05);border-radius:10px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;font-weight:600;color:var(--cream);cursor:pointer;transition:all .25s}
+.rsvp-toggle-btn:disabled{opacity:.45;cursor:not-allowed}
+.rsvp-toggle-btn.sel-yes{background:var(--peach);border-color:var(--peach);color:#fff}
+.rsvp-toggle-btn.sel-no{background:rgba(74,94,0,.14);border-color:var(--peach);color:var(--peach)}
+.rsvp-feedback{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;font-weight:600;text-align:center;margin:14px auto 0;line-height:1.5}
 
 /* ═══════════════════════════════════════════════════════
    NO NIÑOS
@@ -1852,16 +1861,20 @@ footer{
   <p class="rsvp-sub">Confirma antes del<br><span class="rsvp-dl">15 de Septiembre de 2026</span></p>
 
   <div class="rsvp-form-wrap">
+    <p class="rsvp-greet" id="rsvpGreet" style="display:none"></p>
     <span class="rsvp-pass-lbl">Pases asignados</span>
     <p class="rsvp-pases-num" id="rsvpPasesNum">1</p>
     <span class="rsvp-pases-lbl" id="rsvpPasesLbl">persona</span>
-    <input type="text" id="rsvpName" class="rsvp-input"
-           placeholder="Tu nombre completo"
-           autocomplete="name" maxlength="60">
+    <div class="rsvp-toggle" id="rsvpToggle">
+      <button type="button" class="rsvp-toggle-btn" id="btnYes">Asistiré</button>
+      <button type="button" class="rsvp-toggle-btn" id="btnNo">No podré asistir</button>
+    </div>
+    <div id="rsvpFields" class="rsvp-fields" style="display:none"></div>
     <button type="button" onclick="sendRSVP()" class="btn btn-olive rsvp-submit-btn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      Confirmar asistencia
+      <span id="rsvpBtnText">Confirmar asistencia</span>
     </button>
+    <p class="rsvp-feedback" id="rsvpFeedback" style="display:none"></p>
   </div>
 
   <div class="rsvp-adults" id="rsvpAdults">
@@ -2247,43 +2260,130 @@ function countdown() {
   } else { showBtn(); }
 })();
 
-/* ── RSVP · PASES DESDE URL ──────────────────────────── */
-const _p = parseInt(new URLSearchParams(location.search).get('pases')) || 1;
-const _pases = Math.min(5, Math.max(1, _p));
+/* ── RSVP · FLUJO COMPLETO (toggle · prefill · actualizar) ── */
 (function(){
-  const numEl = document.getElementById('rsvpPasesNum');
-  const lblEl = document.getElementById('rsvpPasesLbl');
-  if (numEl) numEl.textContent = _pases;
-  if (lblEl) lblEl.textContent = _pases === 1 ? 'persona' : 'personas';
-})();
+  var RSVP_URL  = 'https://boda-maria-luisa-y-jorge-eduardo.vercel.app';
+  var PANEL_API = 'https://panel-invitados.vercel.app/api/confirmar';
+  var params  = new URLSearchParams(location.search);
+  var urlPara = (params.get('para') || '').trim();
+  var rawP    = parseInt(params.get('pases')) || 1;
+  var pases   = Math.min(5, Math.max(1, rawP));
+  var rsvpChoice = null;
 
-function sendRSVP() {
-  const name = (document.getElementById('rsvpName')?.value || '').trim();
-  if (!name) { toast('Escribe tu nombre completo'); return; }
+  var numEl   = document.getElementById('rsvpPasesNum');
+  var lblEl   = document.getElementById('rsvpPasesLbl');
+  var greetEl = document.getElementById('rsvpGreet');
+  var btnYes  = document.getElementById('btnYes');
+  var btnNo   = document.getElementById('btnNo');
+  var fieldsEl= document.getElementById('rsvpFields');
+  var btnText = document.getElementById('rsvpBtnText');
+  var feedEl  = document.getElementById('rsvpFeedback');
 
-  const btn = document.querySelector('.rsvp-submit-btn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+  if (numEl) numEl.textContent = pases;
+  if (lblEl) lblEl.textContent = pases === 1 ? 'persona' : 'personas';
+  if (greetEl && urlPara) { greetEl.textContent = urlPara; greetEl.style.display = 'block'; }
 
-  fetch('https://panel-invitados.vercel.app/api/confirmar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      slug: 'boda-maria-luisa-y-jorge-eduardo',
-      nombre: name,
-      pases: _pases,
-      confirmado: true
+  function renderFields(n){
+    if (!fieldsEl) return;
+    fieldsEl.innerHTML = '';
+    for (var i = 0; i < n; i++){
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'rsvp-input';
+      inp.placeholder = n === 1 ? 'Escribe tu nombre completo' : 'Nombre completo del invitado ' + (i + 1);
+      inp.autocomplete = 'off';
+      inp.maxLength = 60;
+      fieldsEl.appendChild(inp);
+    }
+  }
+
+  function selectRsvp(choice){
+    rsvpChoice = choice;
+    if (btnYes) { btnYes.classList.toggle('sel-yes', choice === 'yes'); btnYes.classList.remove('sel-no'); }
+    if (btnNo)  { btnNo.classList.toggle('sel-no', choice === 'no'); btnNo.classList.remove('sel-yes'); }
+    if (fieldsEl){
+      if (choice === 'yes'){ renderFields(pases); fieldsEl.style.display = 'flex'; }
+      else { fieldsEl.innerHTML = ''; fieldsEl.style.display = 'none'; }
+    }
+  }
+
+  if (btnYes) btnYes.addEventListener('click', function(){ selectRsvp('yes'); });
+  if (btnNo)  btnNo.addEventListener('click', function(){ selectRsvp('no'); });
+
+  // Guard silencioso + prefill (si ya respondió)
+  if (urlPara) {
+    if (btnYes) btnYes.disabled = true;
+    if (btnNo)  btnNo.disabled = true;
+    fetch(PANEL_API + '?nombre=' + encodeURIComponent(urlPara) + '&url_boda=' + encodeURIComponent(RSVP_URL))
+      .then(function(r){ return r.json(); })
+      .then(function(resp){
+        var d = resp.invitado;
+        if (d && typeof d.pases === 'number' && d.pases > 0 && d.pases <= 20) {
+          pases = d.pases;
+          if (numEl) numEl.textContent = pases;
+          if (lblEl) lblEl.textContent = pases === 1 ? 'persona' : 'personas';
+        }
+        if (btnYes) btnYes.disabled = false;
+        if (btnNo)  btnNo.disabled = false;
+        if (d && (d.estado === 'confirmado' || d.estado === 'declino')) {
+          selectRsvp(d.estado === 'confirmado' ? 'yes' : 'no');
+          if (d.estado === 'confirmado' && d.nombres_confirmados && d.nombres_confirmados.length && fieldsEl) {
+            var ins = fieldsEl.querySelectorAll('input');
+            d.nombres_confirmados.forEach(function(nm, i){ if (ins[i]) ins[i].value = nm; });
+          }
+          if (btnText) btnText.textContent = 'Actualizar respuesta';
+        }
+      })
+      .catch(function(){ if (btnYes) btnYes.disabled = false; if (btnNo) btnNo.disabled = false; });
+  }
+
+  window.sendRSVP = function(){
+    if (!rsvpChoice) {
+      if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Por favor indícanos si podrás asistir.'; }
+      return;
+    }
+    var nombres = [];
+    if (rsvpChoice === 'yes' && fieldsEl) {
+      nombres = Array.prototype.slice.call(fieldsEl.querySelectorAll('input'))
+        .map(function(i){ return i.value.trim(); })
+        .filter(function(n){ return n.length > 0; });
+      if (nombres.length === 0) {
+        if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Escribe al menos un nombre completo.'; }
+        return;
+      }
+    }
+    var estado = rsvpChoice === 'yes' ? 'confirmado' : 'declino';
+    var btn = document.querySelector('.rsvp-submit-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+    if (btnText) btnText.textContent = 'Enviando…';
+    fetch(PANEL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: urlPara || nombres[0] || 'Invitado',
+        url_boda: RSVP_URL,
+        estado: estado,
+        pases_confirmados: estado === 'confirmado' ? nombres.length : 0,
+        nombres_confirmados: estado === 'confirmado' ? nombres : []
+      })
     })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error('Error');
-    toast('¡Confirmación enviada! Gracias 🌿');
-    if (btn) btn.textContent = '✓ Confirmado';
-  })
-  .catch(() => {
-    toast('Error al confirmar. Intenta de nuevo.');
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-  });
-}
+    .then(function(r){ if (!r.ok) throw new Error('Error'); return r.json(); })
+    .then(function(){
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (btnText) btnText.textContent = 'Actualizar respuesta';
+      if (feedEl) {
+        feedEl.style.display = 'block';
+        feedEl.style.color = estado === 'confirmado' ? '#4a5e00' : '#8a6d34';
+        feedEl.textContent = estado === 'confirmado' ? '¡Confirmación enviada! Gracias 🌿' : 'Respuesta guardada. ¡Gracias por avisarnos!';
+      }
+    })
+    .catch(function(){
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (btnText) btnText.textContent = 'Confirmar asistencia';
+      if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Error al confirmar. Intenta de nuevo.'; }
+    });
+  };
+})();
 
 /* ── COPY CLABE ──────────────────────────────────────── */
 /* ── SOBRE INTERACTIVO ───────────────────────────────── */
