@@ -2261,14 +2261,40 @@ function countdown() {
 })();
 
 /* ── RSVP · FLUJO COMPLETO (toggle · prefill · actualizar) ── */
+/* Respuestas cerradas por invitación: el panel marca `bloqueado` y el API
+   rechaza con 423 `respuestas_cerradas`. Así la pareja cierra una ronda de
+   invitaciones y solo la nueva ronda puede responder. */
 (function(){
   var RSVP_URL  = 'https://boda-maria-luisa-y-jorge-eduardo.vercel.app';
   var PANEL_API = 'https://panel-invitados.vercel.app/api/confirmar';
+
+  /* WhatsApp y Messenger cortan la URL en el primer espacio o &. El panel
+     manda un token base64url en ?i= ("nombre|pases|menores") que llega
+     intacto. Se conserva ?para=&pases= para los links ya enviados. */
+  function decodeInvite(tok){
+    try{
+      var b64 = tok.replace(/-/g,'+').replace(/_/g,'/');
+      while (b64.length % 4) b64 += '=';
+      var bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var p = new TextDecoder().decode(bytes).split('|');
+      return { para: (p[0] || '').trim(), pases: parseInt(p[1], 10) || 1 };
+    }catch(e){ return null; }
+  }
   var params  = new URLSearchParams(location.search);
-  var urlPara = (params.get('para') || '').trim();
-  var rawP    = parseInt(params.get('pases')) || 1;
-  var pases   = Math.min(5, Math.max(1, rawP));
+  var urlPara = '', rawP = 1;
+  if (params.get('i')) {
+    var dec = decodeInvite(params.get('i'));
+    if (dec && dec.para) { urlPara = dec.para; rawP = dec.pases; }
+  }
+  if (!urlPara) {
+    urlPara = (params.get('para') || '').trim();
+    rawP = parseInt(params.get('pases')) || 1;
+  }
+  var pases   = Math.min(20, Math.max(1, rawP));
   var rsvpChoice = null;
+  var cerrado = false;   // bloqueada en el panel o sin invitación válida
+  var listo   = false;   // el panel ya respondió
 
   var numEl   = document.getElementById('rsvpPasesNum');
   var lblEl   = document.getElementById('rsvpPasesLbl');
@@ -2278,6 +2304,19 @@ function countdown() {
   var fieldsEl= document.getElementById('rsvpFields');
   var btnText = document.getElementById('rsvpBtnText');
   var feedEl  = document.getElementById('rsvpFeedback');
+  var btn     = document.querySelector('.rsvp-submit-btn');
+
+  function say(txt, color){
+    if (!feedEl) return;
+    feedEl.textContent = txt || '';
+    feedEl.style.display = txt ? 'block' : 'none';
+    feedEl.style.color = color || '#a04a2a';
+  }
+  function setBtn(enabled){
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '1' : '.5';
+  }
 
   if (numEl) numEl.textContent = pases;
   if (lblEl) lblEl.textContent = pases === 1 ? 'persona' : 'personas';
@@ -2293,11 +2332,13 @@ function countdown() {
       inp.placeholder = n === 1 ? 'Escribe tu nombre completo' : 'Nombre completo del invitado ' + (i + 1);
       inp.autocomplete = 'off';
       inp.maxLength = 60;
+      inp.disabled = cerrado;
       fieldsEl.appendChild(inp);
     }
   }
 
   function selectRsvp(choice){
+    if (cerrado) return;
     rsvpChoice = choice;
     if (btnYes) { btnYes.classList.toggle('sel-yes', choice === 'yes'); btnYes.classList.remove('sel-no'); }
     if (btnNo)  { btnNo.classList.toggle('sel-no', choice === 'no'); btnNo.classList.remove('sel-yes'); }
@@ -2307,25 +2348,44 @@ function countdown() {
     }
   }
 
+  /* Deja visible lo que ya respondió, pero sin poder cambiarlo */
+  function cerrarRespuestas(msg){
+    cerrado = true;
+    if (btnYes) btnYes.disabled = true;
+    if (btnNo)  btnNo.disabled = true;
+    if (fieldsEl) fieldsEl.querySelectorAll('input').forEach(function(i){ i.disabled = true; });
+    setBtn(false);
+    if (btnText) btnText.textContent = 'Respuestas cerradas';
+    say(msg || 'Las confirmaciones de esta invitación ya están cerradas. Si necesitas hacer algún cambio, contacta directamente a los novios.', '#8a6d34');
+  }
+
   if (btnYes) btnYes.addEventListener('click', function(){ selectRsvp('yes'); });
   if (btnNo)  btnNo.addEventListener('click', function(){ selectRsvp('no'); });
 
-  // Guard silencioso + prefill (si ya respondió)
+  if (btnYes) btnYes.disabled = true;
+  if (btnNo)  btnNo.disabled = true;
+  setBtn(false);
+
   if (urlPara) {
-    if (btnYes) btnYes.disabled = true;
-    if (btnNo)  btnNo.disabled = true;
     fetch(PANEL_API + '?nombre=' + encodeURIComponent(urlPara) + '&url_boda=' + encodeURIComponent(RSVP_URL))
       .then(function(r){ return r.json(); })
       .then(function(resp){
-        var d = resp.invitado;
-        if (d && typeof d.pases === 'number' && d.pases > 0 && d.pases <= 20) {
+        var d = resp && resp.invitado;
+        listo = true;
+        /* Sin invitación en el panel no se permite responder: un link
+           recortado o escrito a mano crearía una respuesta suelta que se
+           saltaría el cierre de la ronda. */
+        if (!d) {
+          cerrarRespuestas('No encontramos tu invitación. Abre el enlace personalizado que te enviaron por WhatsApp; si el problema sigue, contacta a los novios.');
+          if (btnText) btnText.textContent = 'Confirmar asistencia';
+          return;
+        }
+        if (typeof d.pases === 'number' && d.pases > 0 && d.pases <= 20) {
           pases = d.pases;
           if (numEl) numEl.textContent = pases;
           if (lblEl) lblEl.textContent = pases === 1 ? 'persona' : 'personas';
         }
-        if (btnYes) btnYes.disabled = false;
-        if (btnNo)  btnNo.disabled = false;
-        if (d && (d.estado === 'confirmado' || d.estado === 'declino')) {
+        if (d.estado === 'confirmado' || d.estado === 'declino') {
           selectRsvp(d.estado === 'confirmado' ? 'yes' : 'no');
           if (d.estado === 'confirmado' && d.nombres_confirmados && d.nombres_confirmados.length && fieldsEl) {
             var ins = fieldsEl.querySelectorAll('input');
@@ -2333,13 +2393,23 @@ function countdown() {
           }
           if (btnText) btnText.textContent = 'Actualizar respuesta';
         }
+        if (d.bloqueado) { cerrarRespuestas(); return; }
+        if (btnYes) btnYes.disabled = false;
+        if (btnNo)  btnNo.disabled = false;
+        setBtn(true);
       })
-      .catch(function(){ if (btnYes) btnYes.disabled = false; if (btnNo) btnNo.disabled = false; });
+      .catch(function(){
+        say('No pudimos cargar tu invitación. Recarga la página e inténtalo de nuevo.');
+      });
+  } else {
+    /* Sin link personalizado no hay invitación que registrar */
+    say('Para confirmar necesitas abrir el enlace personalizado que te enviaron por WhatsApp. Ese enlace lleva tu nombre y tus pases; si lo abres desde un reenvío o escribiendo la dirección a mano, no podemos identificar tu invitación.', '#8a6d34');
   }
 
   window.sendRSVP = function(){
+    if (cerrado || !listo || !urlPara || (btn && btn.disabled)) return;
     if (!rsvpChoice) {
-      if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Por favor indícanos si podrás asistir.'; }
+      say('Por favor indícanos si podrás asistir.');
       return;
     }
     var nombres = [];
@@ -2348,39 +2418,53 @@ function countdown() {
         .map(function(i){ return i.value.trim(); })
         .filter(function(n){ return n.length > 0; });
       if (nombres.length === 0) {
-        if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Escribe al menos un nombre completo.'; }
+        say('Escribe al menos un nombre completo.');
         return;
       }
     }
     var estado = rsvpChoice === 'yes' ? 'confirmado' : 'declino';
-    var btn = document.querySelector('.rsvp-submit-btn');
-    if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+    setBtn(false);
     if (btnText) btnText.textContent = 'Enviando…';
+    say('');
     fetch(PANEL_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre: urlPara || nombres[0] || 'Invitado',
+        nombre: urlPara,
         url_boda: RSVP_URL,
         estado: estado,
         pases_confirmados: estado === 'confirmado' ? nombres.length : 0,
         nombres_confirmados: estado === 'confirmado' ? nombres : []
       })
     })
-    .then(function(r){ if (!r.ok) throw new Error('Error'); return r.json(); })
-    .then(function(){
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-      if (btnText) btnText.textContent = 'Actualizar respuesta';
-      if (feedEl) {
-        feedEl.style.display = 'block';
-        feedEl.style.color = estado === 'confirmado' ? '#4a5e00' : '#8a6d34';
-        feedEl.textContent = estado === 'confirmado' ? '¡Confirmación enviada! Gracias 🌿' : 'Respuesta guardada. ¡Gracias por avisarnos!';
+    .then(function(r){
+      return r.json()
+        .then(function(d){ return { ok: r.ok, d: d }; })
+        .catch(function(){ return { ok: r.ok, d: null }; });
+    })
+    .then(function(res){
+      /* Solo se da por guardada si el panel la registró de verdad */
+      if (res.ok && res.d && res.d.ok === true) {
+        setBtn(true);
+        if (btnText) btnText.textContent = 'Actualizar respuesta';
+        say(estado === 'confirmado' ? '¡Confirmación enviada! Gracias 🌿' : 'Respuesta guardada. ¡Gracias por avisarnos!',
+            estado === 'confirmado' ? '#4a5e00' : '#8a6d34');
+        return;
       }
+      var err = res.d && res.d.error;
+      if (err === 'respuestas_cerradas') { cerrarRespuestas(); return; }
+      setBtn(true);
+      if (btnText) btnText.textContent = 'Reintentar';
+      say(err === 'no_match'
+        ? 'No pudimos identificar tu invitación. Abre el enlace personalizado que te enviaron por WhatsApp.'
+        : err === 'invitacion_borrada'
+          ? 'Esta invitación ya no está activa. Contacta a los novios para que te envíen un enlace nuevo.'
+          : 'Hubo un problema al enviar. Inténtalo de nuevo.');
     })
     .catch(function(){
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-      if (btnText) btnText.textContent = 'Confirmar asistencia';
-      if (feedEl) { feedEl.style.display = 'block'; feedEl.style.color = '#a04a2a'; feedEl.textContent = 'Error al confirmar. Intenta de nuevo.'; }
+      setBtn(true);
+      if (btnText) btnText.textContent = 'Reintentar';
+      say('Sin conexión. Revisa tu internet e inténtalo de nuevo.');
     });
   };
 })();
